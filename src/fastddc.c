@@ -103,12 +103,22 @@ void fft_swap_sides(float complex *io, int32_t fft_size)
 {
 	int32_t middle = fft_size / 2;
 	float complex temp;
-	for(int32_t i = 0; i < middle; i++)
+#define tsize 512
+	float complex t[tsize];
+	int32_t i = 0;
+	for(; i + tsize <= middle; i += tsize)
+	{
+		memcpy(t, io + i, tsize * sizeof(float complex));
+		memcpy(io + i, io + middle + i, tsize * sizeof(float complex));
+		memcpy(io + middle + i, t, tsize * sizeof(float complex));
+	}
+	for(; i < middle; i++)
 	{
 		temp = io[i];
 		io[i] = io[i+middle];
 		io[i+middle] = temp;
 	}
+#undef tsize
 }
 
 decimating_shift_addition_status_t fastddc_inv_cc(float complex *input, float complex *output, fastddc_t* ddc, FFT_PLAN_T *plan_inverse, float complex *taps_fft, decimating_shift_addition_status_t shift_stat)
