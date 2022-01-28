@@ -135,9 +135,19 @@ decimating_shift_addition_status_t fastddc_inv_cc(float complex *input, float co
 		}
 	}
 #endif
+    int32_t output_offset = ddc->fft_size-ddc->offsetbin+(ddc->fft_inv_size/2);
 	for(int32_t i=0;i<ddc->fft_size;i++)
 	{
-		int32_t output_index = (ddc->fft_size+i-ddc->offsetbin+(ddc->fft_inv_size/2))%plan_inverse->size;
+		int32_t output_index = (output_offset+i)%plan_inverse->size;
+		if (output_index == 0) {
+			int32_t block_end = i + plan_inverse->size;
+			if (block_end <= ddc->fft_size) {
+				for (int32_t k = 0; i < block_end; i++, k++) {
+					inv_input[k] += input[i] * taps_fft[i];
+				}
+				continue;
+			}
+		}
 		//fprintf(stderr, "output_index = %d , tap_index = %d, input index = %d\n", output_index, tap_index, i);
 		//cmultadd(inv_input+output_index, input+i, taps_fft+tap_index); //cmultadd(output, input1, input2):   complex output += complex input1 * complex input 2
 		// (a+b*i)*(c+d*i) = (ac-bd)+(ad+bc)*i
